@@ -2,10 +2,10 @@
 import time
 import datetime
 import socket
-import nmap3 #Library para encontrar os hosts na rede
+#import nmap3 #Library para encontrar os hosts na rede
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.1.11','192.168.2.12','192.168.2.14','192.168.2.15']
+computers_available = ['192.168.1.9','192.168.1.10','192.168.1.11','192.168.1.13']
 
 # SOCKT PORT
 PORT = 1997
@@ -55,10 +55,10 @@ def main():
 
 
 # -------------- Utils --------------------
-def getComputersId():
-    nm = nmap3.NmapScanTechniques()
-    results = nm.nmap_tcp_scan('192.168.1.0/24')
-    print(results)
+#def getComputersId():
+    #nm = nmap3.NmapScanTechniques()
+    #results = nm.nmap_tcp_scan('192.168.1.0/24')
+    #print(results)
 
 
 # -------------- Server -------------------
@@ -87,7 +87,9 @@ def sendMasterIdToClients():
     #CRIAR METRICA DE ENVIO DE DAS MSG DE ATUALIZAÇÃO DO MASTER
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
-    for ip in computers_available:
+    tempComputerAvailable = computers_available
+    tempComputerAvailable.remove(computer_id)
+    for ip in tempComputerAvailable:
         msg = 'setMaster %s:%s' % master_address
         print(msg)
         skt.sendto(msg.encode(), (ip, PORT))
