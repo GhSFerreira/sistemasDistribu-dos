@@ -41,7 +41,9 @@ def main():
                 print('Aguardando requisições ...')
                 skt.settimeout(15)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
+                print(data)
                 info = data.decode().split(' ')
+                print(' ==== info ==== \n' + info)
 
                 if info[0] == 'getClock':
                     skt.sendto(getClock(), address)
