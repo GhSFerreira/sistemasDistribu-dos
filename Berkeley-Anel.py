@@ -21,7 +21,7 @@ def main():
     
     while True:
         #Verifica se o computador é o servidor
-        if computers_master == computer_id: #Implementar temporizador para pedir uma atualização a cada 10s
+        if computers_master == computer_id: 
             sendMasterIdToClients(computers_available)
             clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
@@ -47,7 +47,9 @@ def main():
                     skt.sendto(getClock(), address)
                     print('------ Relogio Enviado ------')
                 elif info[0] == 'setMaster':
-                    print('------ Master atualizado =>>> %s ------' % data)
+                    skt.sendto(getClock(), address)
+                    print('------ Relogio Enviado ------- ')
+                    setMaster(info[1].split(':')[0])
             except:
                 print('------ Nenhum pacote recebido! ------')
                 
@@ -66,7 +68,17 @@ def main():
 #################### Solicita o time dos clientes
 def getClientTime():
     print(' -------- Metodo: getClientTime ----------')
-    return datetime.datetime.now().time()
+    skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
+    master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
+    skt.bind(master_address)
+
+    try:
+        print('Aguardando requisições === getClientTime ...')
+        skt.settimeout(5)   #Aguarda a requisição por 15s
+        data, address = skt.recvfrom(1460)
+        print(data.decode())
+    except:
+        print('------ Nenhum pacote recebido! === getClientTime------')   
     #print('1 - selecionar os computadores clientes')
     #print('2 - pedir o timer para cada cliente e inserir em um vetor')
     #print('3 - retornar uma tupla com o id cliente e a hora')
@@ -124,7 +136,7 @@ def askElection(): # Implementação do algoritmo Bully
 def setMaster(computer_id):
     global computers_master
     computers_master = computer_id
-    print('------------- Novo Master: %s -------------' % computer_id)
+    print('------------- Master Atualizado: %s -------------' % computer_id)
 
 #################### Recebe a definição do relógio do master
 def setClock():
