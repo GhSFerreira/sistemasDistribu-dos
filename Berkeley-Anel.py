@@ -5,7 +5,7 @@ import socket
 #import nmap3 #Library para encontrar os hosts na rede
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.1.9','192.168.1.10','192.168.1.11','192.168.1.13']
+computers_available = ['192.168.1.9','192.168.1.10','192.168.1.11']
 
 # SOCKT PORT
 PORT = 1997
@@ -22,7 +22,7 @@ def main():
     while True:
         #Verifica se o computador é o servidor
         if computers_master == computer_id: #Implementar temporizador para pedir uma atualização a cada 10s
-            sendMasterIdToClients()
+            sendMasterIdToClients(computers_available)
             clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
             sendTimerToClients(newTimer)
@@ -41,6 +41,8 @@ def main():
                 print('Aguardando requisições ...')
                 skt.settimeout(15)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
+
+                print(data)
 
                 if data == 'getClock':
                     skt.sendto(getClock(), address)
@@ -82,14 +84,12 @@ def sendTimerToClients(newTimer):
     #print('1 - Pega os computadores clientes')
     #print('2 - envia o relogio para cada cliente')
 
-def sendMasterIdToClients():
+def sendMasterIdToClients(clientsToSend):
     print('---- Enviando Master ID para os clientes ----')
     #CRIAR METRICA DE ENVIO DE DAS MSG DE ATUALIZAÇÃO DO MASTER
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
-    tempComputerAvailable = computers_available
-    tempComputerAvailable.remove(computer_id)
-    for ip in tempComputerAvailable:
+    for ip in clientsToSend:
         msg = 'setMaster %s:%s' % master_address
         print(msg)
         skt.sendto(msg.encode(), (ip, PORT))
