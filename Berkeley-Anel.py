@@ -41,12 +41,12 @@ def main():
                 print('Aguardando requisições ...')
                 skt.settimeout(15)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
-                data.decode().split(' ')
+                info = data.decode().split(' ')
 
-                if data == 'getClock':
+                if info[0] == 'getClock':
                     skt.sendto(getClock(), address)
                     print('------ Relogio Enviado ------')
-                elif data == 'setMaster':
+                elif info[0] == 'setMaster':
                     print('------ Master atualizado =>>> %s ------' % data)
             except:
                 print('------ Nenhum pacote recebido! ------')
