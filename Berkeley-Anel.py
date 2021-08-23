@@ -11,10 +11,10 @@ computers_available = ['192.168.2.28','192.168.2.11','192.168.2.12']
 PORT = 1997
 
 # Define o id deste computador pelo ip
-computer_id = '192.168.2.28' #socket.gethostbyname(socket.gethostname())
+computer_id = '192.168.2.23' #socket.gethostbyname(socket.gethostname())
 print(' ************** Computer ID: %s ***********' % computer_id)
 #define o master inicial
-computers_master = '192.168.2.28'
+computers_master = '192.168.2.23'
 
 def main():
     #getComputersId()
