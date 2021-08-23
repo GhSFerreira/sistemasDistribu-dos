@@ -46,10 +46,10 @@ def main():
                 print(info)
 
                 if info[0] == 'setMaster':
-                    skt.sendto(getClock(), address)
+                    skt.sendto(getClock().encode(), address)
                     print('------ Relogio Enviado ------- ')
                     setMaster(info[1].split(':')[0])
-            except TimeoutError:
+            except socket.timeout:
                 print('------ Nenhum pacote recebido! ------')
                 
         else:
@@ -76,7 +76,7 @@ def getClientTime():
         skt.settimeout(10)   #Aguarda a requisição por 15s
         data, address = skt.recvfrom(1460)
         print(data.decode())
-    except:
+    except socket.timeout:
         print('------ Nenhum pacote recebido! === getClientTime------')  
     finally:
         skt.close()
@@ -110,18 +110,18 @@ def sendMasterIdToClients(clientsToSend):
     #CRIAR METRICA DE ENVIO DE DAS MSG DE ATUALIZAÇÃO DO MASTER
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
+    skt.bind(master_address)
     for ip in clientsToSend:
         msg = 'setMaster %s:%s' % master_address
         print(msg)
         skt.sendto(msg.encode('utf-8'), (ip, PORT))
         print('Enviando Master ID => %s' % ip)
         try:
-            skt.bind(master_address)
             print('Aguardando requisições === getClientTime ...')
             skt.settimeout(2)   #Aguarda a requisição por 15s
             data, address = skt.recvfrom(1460)
             print(data.decode())
-        except TimeoutError:
+        except socket.timeout:
             print('------ Nenhum pacote recebido! === getClientTime------')  
 
     #print(f'>>>> Escutando em IP do Servidor: {master_address[0]}, Porta: {master_address[1]}')
