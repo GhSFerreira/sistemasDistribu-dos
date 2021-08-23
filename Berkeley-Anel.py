@@ -15,7 +15,7 @@ computer_id = '192.168.2.23' #socket.gethostbyname(socket.gethostname())
 computers_master = '192.168.2.23'
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.2.28', '192.168.2.23', '192.168.2.30', '192.168.2.25']
+computers_available = ['192.168.2.28', '192.168.2.23', '192.168.2.30', '192.168.2.27']
 
 # Remove o ID do computador que executa o programa dá lista de compuptadores disponiveis
 computers_toSend = computers_available[:]
