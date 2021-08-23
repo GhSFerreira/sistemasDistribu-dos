@@ -5,7 +5,7 @@ import socket
 #import nmap3 #Library para encontrar os hosts na rede
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.2.28','192.168.2.11','192.168.2.12']
+computers_available = ['192.168.2.28']
 
 # SOCKT PORT
 PORT = 1997
@@ -22,11 +22,11 @@ def main():
     while True:
         #Verifica se o computador é o servidor
         if computers_master == computer_id: 
-            sendMasterIdToClients(computers_available)
+            getClientTimers(computers_available)
             #clientTimers = getClientTime() # solicitará o relógio dos clientes
             #newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
             #sendTimerToClients(newTimer)
-            time.sleep(5)
+            time.sleep(10)
             
         # Caso o servidor seja o cliente
         elif master_is_alive(computers_master):
@@ -65,6 +65,7 @@ def main():
 
 # -------------- Server -------------------
 #################### Solicita o time dos clientes
+#### DELETE #######
 def getClientTime():
     print(' -------- Metodo: getClientTime ----------')
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
@@ -105,7 +106,7 @@ def sendTimerToClients(newTimer):
     #print('1 - Pega os computadores clientes')
     #print('2 - envia o relogio para cada cliente')
 
-def sendMasterIdToClients(clientsToSend):
+def getClientTimers(clientsToSend):
     print('---- Enviando Master ID para os clientes ----')
     #CRIAR METRICA DE ENVIO DE DAS MSG DE ATUALIZAÇÃO DO MASTER
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
