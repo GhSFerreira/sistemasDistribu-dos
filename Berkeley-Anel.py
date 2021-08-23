@@ -5,16 +5,16 @@ import socket
 #import nmap3 #Library para encontrar os hosts na rede
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.1.9','192.168.1.10','192.168.1.11']
+computers_available = ['192.168.2.28','192.168.2.11','192.168.2.12']
 
 # SOCKT PORT
 PORT = 1997
 
 # Define o id deste computador pelo ip
-computer_id = '192.168.1.13' #socket.gethostbyname(socket.gethostname())
+computer_id = '192.168.2.28' #socket.gethostbyname(socket.gethostname())
 print(' ************** Computer ID: %s ***********' % computer_id)
 #define o master inicial
-computers_master = '192.168.1.13'
+computers_master = '192.168.2.28'
 
 def main():
     #getComputersId()
@@ -26,7 +26,7 @@ def main():
             clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
             sendTimerToClients(newTimer)
-            time.sleep(10)
+            time.sleep(15)
             
         # Caso o servidor seja o cliente
         elif master_is_alive(computers_master):
@@ -39,7 +39,7 @@ def main():
 
             try:
                 print('Aguardando requisições ...')
-                skt.settimeout(15)   #Aguarda a requisição por 15s
+                skt.settimeout(10)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
                 print(data)
                 info = data.decode().split(' ')
@@ -80,7 +80,9 @@ def getClientTime():
         data, address = skt.recvfrom(1460)
         print(data.decode())
     except:
-        print('------ Nenhum pacote recebido! === getClientTime------')   
+        print('------ Nenhum pacote recebido! === getClientTime------')  
+    finally:
+        skt.close()
     #print('1 - selecionar os computadores clientes')
     #print('2 - pedir o timer para cada cliente e inserir em um vetor')
     #print('3 - retornar uma tupla com o id cliente e a hora')
@@ -88,6 +90,15 @@ def getClientTime():
 #################### Calcula o novo relógio
 def calcTimer(clientTimers):
     print(' -------- Metodo: calcTimer ----------')
+    sumTimers = 0
+    clientTimers = ['20:12:50', '20:13:02', '20:12:00']
+    for time in clientTimers:
+        pt = time.split(':')
+        total_seconds = int(pt[2]) + int(pt[1])*60 + int(pt[0])*3600
+        sumTimers += total_seconds
+        print('Time in seconds: %s' % total_seconds)
+
+    print('Average Time: %i' % (sumTimers/len(clientTimers)))
     #print('1 - tratar a tupla com os ids clientes e os relógios')
     #print('2 - calcular a media dos RTT e relógios')
     #print('3 - retornar o novo relogio')
