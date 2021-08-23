@@ -15,7 +15,7 @@ computer_id = '192.168.2.23' #socket.gethostbyname(socket.gethostname())
 computers_master = '192.168.2.23'
 
 # Define os Id's dos computadores na rede
-computers_available = ['192.168.2.28', '192.168.2.23', '192.168.2.24', '192.168.2.25']
+computers_available = ['192.168.2.28', '192.168.2.23', '192.168.2.30', '192.168.2.25']
 
 # Remove o ID do computador que executa o programa dá lista de compuptadores disponiveis
 computers_toSend = computers_available[:]
@@ -33,6 +33,7 @@ def main():
             #clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
             sendTimerToClients(newTimer)
+            print(' \n -------- Tempo de Espera 10 Segundos ---------')
             time.sleep(10)
             
         # Caso o servidor seja o cliente
@@ -57,7 +58,10 @@ def main():
                     print('------ Relogio Enviado ------- ')
                     setMaster(info[1].split(':')[0])
                 elif info[0] == 'setClock':
-                    setClock()
+                    setClock(info[1])
+                elif info[0] == 'election':
+                    skt.sendto('OK'.encode(), address)
+                    print('======= Votação Iniciada por IP: %s' % info[1])
 
             except socket.timeout:
                 #Caso o tempo da repsosta demore, significa que o servidor caiu
@@ -66,21 +70,16 @@ def main():
 
 
 # -------------- Utils --------------------
-#def getComputersId():
-    #nm = nmap3.NmapScanTechniques()
-    #results = nm.nmap_tcp_scan('192.168.1.0/24')
-    #print(results)
-
 
 # -------------- Server -------------------
 #################### Calcula o novo relógio
 def calcTimer(clientTimers):
-    print(' -------- Metodo: calcTimer ----------')
+    print(' =========  Calcula o Timer Médio  =========')
     sumTimers = 0
-    print(clientTimers)
     if not clientTimers:
-        print('Nenhum relogio recebido!')
-        return datetime.datetime.now().strftime('%H:%M:%S')
+        timer = datetime.datetime.now().strftime('%H:%M:%S')
+        print('Nenhum relogio recebido! Atualizado com o horario do servidor: %s \n' % timer)
+        return timer
     else:
         for time in clientTimers:
             pt = time.split(':')
@@ -94,51 +93,74 @@ def calcTimer(clientTimers):
         return time_str
 
 def sendTimerToClients(newTimer):
+    print('========== Enviando relógio para os clientes ============')
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     client_address = (computers_master, PORT)   # IP do servidor e porta de comunicação    
     skt.bind(client_address)
 
     for ip in computers_toSend:
-        print(' -------- Metodo: sendTimerToClients %s ----------' % ip)
-        skt.sendto(getClock().encode(), ip)
+        print(' -------- ID: %s ----------' % ip)
+        skt.sendto(('setClock ' + getClock()).encode(), (ip,PORT))
     
 
 def getClientTimers(clientsToSend):
-    print('---- Enviando Master ID para os clientes ----')
-    #CRIAR METRICA DE ENVIO DE DAS MSG DE ATUALIZAÇÃO DO MASTER
+    print('========== Enviando Master ID para os clientes ============')
+
     clientTimers = []
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
     skt.bind(master_address)
     for ip in clientsToSend:
         msg = 'setMaster %s:%s' % master_address
-        print(msg)
+        #print(msg)
         skt.sendto(msg.encode('utf-8'), (ip, PORT))
         print('Enviando Master ID => %s' % ip)
         try:
-            print('Aguardando requisições === getClientTime ...')
+            print('\nAguardando resposta...')
             skt.settimeout(2)   #Aguarda a requisição por 15s
             data, address = skt.recvfrom(1460)
             data_str = str(data.decode())
             print(data_str)
             clientTimers.append(data_str)
         except socket.timeout:
-            print('------ Nenhum pacote recebido! === getClientTime------')  
+            print('------- Nenhum pacote recebido para atualizar o Master ID --------')  
     
     return clientTimers
 
 # --------- Client -------------
 ################## Solicita a eleição
 def askElection(): # Implementação do algoritmo Bully
-    print(' -------- Metodo: askElection ----------')
+    print(' ---------- Iniciando Eleição ----------')
     reponseIds = []
 
     # receber um lista com a respota dos IDs maiores
-    print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
+    #print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
+    skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
+    client_address = (computer_id, PORT)   # IP do servidor e porta de comunicação
+    skt.bind(client_address)
 
+    for ip in computers_toSend:
+        msg = 'election %s:%s' % client_address
+        #print(msg)
+        skt.sendto(msg.encode('utf-8'), (ip, PORT))
+        print('------ Enviando Mensagem de Eleição enviada para o ID => %s -----------' % ip)
+        try:
+            print('Aguardando resposta da eleição...')
+            skt.settimeout(2)   #Aguarda a requisição por 15s
+            data, address = skt.recvfrom(1460)
+            data_str = str(data.decode())
+           
+            if data_str == 'OK':
+                print('Recebido resposta de => %s' % address)
+                reponseIds.append(data_str)
+
+        except socket.timeout:
+            print('------ Nenhum pacote recebido! === getClientTime------')    
 
     if not reponseIds: #caso ninguem responda, o cliente tornará o master
         setMaster(computer_id)
+    else:
+        print(reponseIds)
 
 ###################### Define o master
 def setMaster(computer_id):
@@ -152,7 +174,6 @@ def setClock():
 
 ################# Envia o relógio do
 def getClock():
-    print(' -------- Metodo: getClock ----------')
     return datetime.datetime.now().strftime('%H:%M:%S')
 # ---------- Inicial do programa ----------
 if __name__ == "__main__":
