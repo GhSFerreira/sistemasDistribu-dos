@@ -23,9 +23,9 @@ def main():
         #Verifica se o computador é o servidor
         if computers_master == computer_id: 
             sendMasterIdToClients(computers_available)
-            clientTimers = getClientTime() # solicitará o relógio dos clientes
-            newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
-            sendTimerToClients(newTimer)
+            #clientTimers = getClientTime() # solicitará o relógio dos clientes
+            #newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
+            #sendTimerToClients(newTimer)
             time.sleep(5)
             
         # Caso o servidor seja o cliente
@@ -42,7 +42,7 @@ def main():
                 skt.settimeout(20)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
 
-                info = data.decode().split(' ')
+                info = data.decode().split()
                 print(info)
 
                 if info[0] == 'setMaster':
@@ -73,7 +73,7 @@ def getClientTime():
 
     try:
         print('Aguardando requisições === getClientTime ...')
-        skt.settimeout(5)   #Aguarda a requisição por 15s
+        skt.settimeout(10)   #Aguarda a requisição por 15s
         data, address = skt.recvfrom(1460)
         print(data.decode())
     except:
@@ -115,6 +115,14 @@ def sendMasterIdToClients(clientsToSend):
         print(msg)
         skt.sendto(msg.encode('utf-8'), (ip, PORT))
         print('Enviando Master ID => %s' % ip)
+        try:
+            skt.bind(master_address)
+            print('Aguardando requisições === getClientTime ...')
+            skt.settimeout(2)   #Aguarda a requisição por 15s
+            data, address = skt.recvfrom(1460)
+            print(data.decode())
+        except TimeoutError:
+            print('------ Nenhum pacote recebido! === getClientTime------')  
 
     #print(f'>>>> Escutando em IP do Servidor: {master_address[0]}, Porta: {master_address[1]}')
     #skt.bind(master_address)
@@ -155,7 +163,7 @@ def setClock():
 ################# Envia o relógio do
 def getClock():
     print(' -------- Metodo: getClock ----------')
-    return datetime.datetime.now().time()
+    return datetime.datetime.now().strftime('%H:%M:%S')
 # ---------- Inicial do programa ----------
 if __name__ == "__main__":
     main()
