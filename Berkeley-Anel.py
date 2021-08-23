@@ -42,8 +42,9 @@ def main():
                 skt.settimeout(10)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
                 print(data)
-                info = data.decode().split(' ')
+                info = str(data.decode().split(' '))
                 print(' ==== info ==== \n' + info)
+                print(' ==== msg ==== \n' + info[0])
 
                 if info[0] == 'getClock':
                     skt.sendto(getClock(), address)
@@ -116,7 +117,7 @@ def sendMasterIdToClients(clientsToSend):
     for ip in clientsToSend:
         msg = 'setMaster %s:%s' % master_address
         print(msg)
-        skt.sendto(msg.encode(), (ip, PORT))
+        skt.sendto(msg.encode('utf-8'), (ip, PORT))
         print('Enviando Master ID => %s' % ip)
 
     #print(f'>>>> Escutando em IP do Servidor: {master_address[0]}, Porta: {master_address[1]}')
