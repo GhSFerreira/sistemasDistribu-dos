@@ -29,10 +29,10 @@ def main():
     while True:
         #Verifica se o computador é o servidor
         if computers_master == computer_id: 
-            clientTimers = getClientTimers(computers_available)
+            clientTimers = getClientTimers(computers_toSend)
             #clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
-            #sendTimerToClients(newTimer)
+            sendTimerToClients(newTimer)
             time.sleep(10)
             
         # Caso o servidor seja o cliente
@@ -77,24 +77,31 @@ def main():
 def calcTimer(clientTimers):
     print(' -------- Metodo: calcTimer ----------')
     sumTimers = 0
-    if clientTimers:
+    print(clientTimers)
+    if not clientTimers:
+        print('Nenhum relogio recebido!')
+        return datetime.datetime.now().strftime('%H:%M:%S')
+    else:
         for time in clientTimers:
             pt = time.split(':')
             total_seconds = int(pt[2]) + int(pt[1])*60 + int(pt[0])*3600
             sumTimers += total_seconds
             print('Time in seconds: %s' % total_seconds)
         average = sumTimers / len(clientTimers)
-        print('Average Time: %i' % average)
+        time_str = str(datetime.timedelta(seconds= average))
+        print('Average Time: %s' % time_str)
 
-        return average
-    else:
-        print('Nenhum relogio recebido!')
-        return datetime.datetime.now().strftime('%H:%M:%S')
+        return time_str
 
 def sendTimerToClients(newTimer):
-    print(' -------- Metodo: sendTimerToClients ----------')
-    #print('1 - Pega os computadores clientes')
-    #print('2 - envia o relogio para cada cliente')
+    skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
+    client_address = (computers_master, PORT)   # IP do servidor e porta de comunicação    
+    skt.bind(client_address)
+
+    for ip in computers_toSend:
+        print(' -------- Metodo: sendTimerToClients %s ----------' % ip)
+        skt.sendto(getClock().encode(), ip)
+    
 
 def getClientTimers(clientsToSend):
     print('---- Enviando Master ID para os clientes ----')
