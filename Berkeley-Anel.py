@@ -137,7 +137,6 @@ def askElection(): # Implementação do algoritmo Bully
     #print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     client_address = (computer_id, PORT)   # IP do servidor e porta de comunicação
-    skt.bind(client_address)
 
     for ip in computers_toSend:
         msg = 'election %s:%s' % client_address
