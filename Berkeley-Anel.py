@@ -47,7 +47,7 @@ def main():
 
             try:
                 print('Aguardando requisições ...')
-                skt.settimeout(45)   #Aguarda a requisição por 15s
+                skt.settimeout(30)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
 
                 info = data.decode().split()
@@ -62,7 +62,7 @@ def main():
                 elif info[0] == 'election':
                     skt.sendto('OK'.encode(), address)
                     print('======= Votação Iniciada por IP: %s' % info[1])
-
+                skt.close()
             except socket.timeout:
                 #Caso o tempo da repsosta demore, significa que o servidor caiu
                 askElection() # Pede uma nova eleição caso o servidor não esteja ativo - Bully
@@ -101,7 +101,7 @@ def sendTimerToClients(newTimer):
     for ip in computers_toSend:
         print(' -------- ID: %s ----------' % ip)
         skt.sendto(('setClock ' + getClock()).encode(), (ip,PORT))
-    
+    skt.close()
 
 def getClientTimers(clientsToSend):
     print('========== Enviando Master ID para os clientes ============')
@@ -124,7 +124,7 @@ def getClientTimers(clientsToSend):
             clientTimers.append(data_str)
         except socket.timeout:
             print('------- Nenhum pacote recebido para atualizar o Master ID --------')  
-    
+    skt.close()
     return clientTimers
 
 # --------- Client -------------
@@ -137,7 +137,7 @@ def askElection(): # Implementação do algoritmo Bully
     #print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     client_address = (computer_id, PORT)   # IP do servidor e porta de comunicação
-
+    skt.bind(client_address)
     for ip in computers_toSend:
         msg = 'election %s:%s' % client_address
         #print(msg)
@@ -156,6 +156,7 @@ def askElection(): # Implementação do algoritmo Bully
         except socket.timeout:
             print('------ Nenhum pacote recebido! === getClientTime------')    
 
+    skt.close()
     if not reponseIds: #caso ninguem responda, o cliente tornará o master
         setMaster(computer_id)
     else:
