@@ -169,8 +169,9 @@ def setMaster(computer_id):
     print('------------- Master Atualizado: %s -------------' % computer_id)
 
 #################### Recebe a definição do relógio do master
-def setClock():
-    print(' ------- Metodo: setClock ----------')
+def setClock(clock):
+    print(' ------- Relógio Atualizado %s ----------' % clock)
+
 
 ################# Envia o relógio do
 def getClock():
