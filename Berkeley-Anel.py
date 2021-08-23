@@ -9,8 +9,8 @@ import socket
 PORT = 1997
 
 # Define o id deste computador pelo ip
-computer_id = '192.168.2.23' #socket.gethostbyname(socket.gethostname())
-
+computer_id = '192.168.2.23'
+print(computer_id)
 #define o master inicial
 computers_master = '192.168.2.23'
 
@@ -65,6 +65,7 @@ def main():
                 skt.close()
             except socket.timeout:
                 #Caso o tempo da repsosta demore, significa que o servidor caiu
+                skt.close()
                 askElection() # Pede uma nova eleição caso o servidor não esteja ativo - Bully
 
 
