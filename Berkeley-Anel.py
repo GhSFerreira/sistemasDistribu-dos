@@ -26,7 +26,7 @@ def main():
             clientTimers = getClientTime() # solicitará o relógio dos clientes
             newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
             sendTimerToClients(newTimer)
-            time.sleep(15)
+            time.sleep(5)
             
         # Caso o servidor seja o cliente
         elif master_is_alive(computers_master):
@@ -39,21 +39,17 @@ def main():
 
             try:
                 print('Aguardando requisições ...')
-                skt.settimeout(10)   #Aguarda a requisição por 15s
+                skt.settimeout(20)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
-                print(data)
-                info = str(data.decode().split(' '))
-                print(' ==== info ==== \n' + info)
-                print(' ==== msg ==== \n' + info[0])
 
-                if info[0] == 'getClock':
-                    skt.sendto(getClock(), address)
-                    print('------ Relogio Enviado ------')
-                elif info[0] == 'setMaster':
+                info = data.decode().split(' ')
+                print(info)
+
+                if info[0] == 'setMaster':
                     skt.sendto(getClock(), address)
                     print('------ Relogio Enviado ------- ')
                     setMaster(info[1].split(':')[0])
-            except:
+            except TimeoutError:
                 print('------ Nenhum pacote recebido! ------')
                 
         else:
