@@ -29,7 +29,7 @@ def main():
             time.sleep(10)
             
         # Caso o servidor seja o cliente
-        elif master_is_alive(computers_master):
+        else:
             print('********* CLIENTE ********** \n')
             # Define o Socket e abre a porta especificada
             skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
@@ -39,7 +39,7 @@ def main():
 
             try:
                 print('Aguardando requisições ...')
-                skt.settimeout(20)   #Aguarda a requisição por 15s
+                skt.settimeout(30)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
 
                 info = data.decode().split()
@@ -50,10 +50,9 @@ def main():
                     print('------ Relogio Enviado ------- ')
                     setMaster(info[1].split(':')[0])
             except socket.timeout:
-                print('------ Nenhum pacote recebido! ------')
-                
-        else:
-            askElection() # Pede uma nova eleição caso o servidor não esteja ativo - Bully
+                #Caso o tempo da repsosta demore, significa que o servidor caiu
+                askElection() # Pede uma nova eleição caso o servidor não esteja ativo - Bully
+
 
 
 # -------------- Utils --------------------
@@ -146,10 +145,10 @@ def askElection(): # Implementação do algoritmo Bully
     reponseIds = []
 
     # receber um lista com a respota dos IDs maiores
-    reponseIds = print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
+    print('1 - Envia mensagem de eleição para todos os processos com id maior. *É necessário congelar a eleição dos ids menores, pois podem perceber o que o servidor caiu*')
 
-    if not reponseIds: #caso ninguem responda, o cliente tornará o master
-        setMaster(computer_id)
+    #if not reponseIds: #caso ninguem responda, o cliente tornará o master
+        #setMaster(computer_id)
 
 ###################### Define o master
 def setMaster(computer_id):
