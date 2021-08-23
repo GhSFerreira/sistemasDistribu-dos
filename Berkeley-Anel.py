@@ -10,9 +10,9 @@ PORT = 1997
 
 # Define o id deste computador pelo ip
 computer_id = '192.168.2.23'
-print(computer_id)
+
 #define o master inicial
-computers_master = '192.168.2.23'
+computers_master = ''
 
 # Define os Id's dos computadores na rede
 computers_available = ['192.168.2.28', '192.168.2.23', '192.168.2.30', '192.168.2.27']
