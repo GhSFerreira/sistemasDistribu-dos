@@ -2,7 +2,6 @@
 import time
 import datetime
 import socket
-from types import resolve_bases
 
 
 ##################### VARIABLES #################
