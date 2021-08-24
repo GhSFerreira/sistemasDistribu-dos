@@ -2,6 +2,7 @@
 import time
 import datetime
 import socket
+from types import resolve_bases
 
 
 ##################### VARIABLES #################
@@ -47,19 +48,21 @@ def main():
 
             try:
                 print('Aguardando requisições ...')
-                skt.settimeout(30)   #Aguarda a requisição por 15s
+                skt.settimeout(15)   #Aguarda a requisição por 15s
                 data, address = skt.recvfrom(1460)
 
                 info = data.decode().split()
                 print(info)
 
                 if info[0] == 'setMaster':
-                    skt.sendto(getClock().encode(), address)
+                    setMaster(info[1])
+                elif info[0] == 'getClock':
                     print('------ Relogio Enviado ------- ')
-                    setMaster(info[1].split(':')[0])
+                    skt.sendto(getClock().encode(), address)
                 elif info[0] == 'setClock':
                     setClock(info[1])
                 elif info[0] == 'election':
+                    time.sleep(2)
                     skt.sendto(b'OK', address)
                     print('======= Votação Iniciada por IP: %s' % info[1])
                 skt.close()
@@ -105,17 +108,17 @@ def sendTimerToClients(newTimer):
     skt.close()
 
 def getClientTimers(clientsToSend):
-    print('========== Enviando Master ID para os clientes ============')
+    print('========== Pedindo relogio para os clientes ============')
 
     clientTimers = []
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
     master_address = (computers_master, PORT)   # IP do servidor e porta de comunicação
     skt.bind(master_address)
     for ip in clientsToSend:
-        msg = 'setMaster %s:%s' % master_address
+        msg = 'getClock'
         #print(msg)
         skt.sendto(msg.encode('utf-8'), (ip, PORT))
-        print('Enviando Master ID => %s' % ip)
+        print('Pedir relogio => %s' % ip)
         try:
             print('\nAguardando resposta...')
             skt.settimeout(2)   #Aguarda a requisição por 15s
@@ -124,9 +127,23 @@ def getClientTimers(clientsToSend):
             print(data_str)
             clientTimers.append(data_str)
         except socket.timeout:
-            print('------- Nenhum pacote recebido para atualizar o Master ID --------')  
+            print('------- Nenhum pacote recebido sobre o relogio --------')  
     skt.close()
     return clientTimers
+
+def sendMasterToClients(clientsToSend, master):
+    print('========== Enviando Master ID para os clientes ============')
+
+    skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
+    ip_address = (computer_id, PORT)   # IP do servidor e porta de comunicação
+    skt.bind(ip_address)
+    for ip in clientsToSend:
+        msg = 'setMaster %s' % master
+        #print(msg)
+        skt.sendto(msg.encode('utf-8'), (ip, PORT))
+        print('Enviando Master ID => %s' % ip)
+      
+    skt.close()
 
 # --------- Client -------------
 ################## Solicita a eleição
@@ -144,26 +161,42 @@ def askElection(): # Implementação do algoritmo Bully
         #print(msg)
         skt.sendto(msg.encode('utf-8'), (ip, PORT))
         print('------ Enviando Mensagem de Eleição enviada para o ID => %s -----------' % ip)
-        try:
+    
+    try:
+        skt.settimeout(3)   #Aguarda a requisição por 15s
+        while True:
             print('Aguardando resposta da eleição...')
-            skt.settimeout(2)   #Aguarda a requisição por 15s
             data, address = skt.recvfrom(1460)
             data_str = str(data.decode())
-            print(data)
-            print(data_str)
            
             if data_str == 'OK':
-                print('Recebido resposta de => %s' % address)
-                reponseIds.append(data_str)
-
-        except socket.timeout:
-            print('------ Nenhum pacote recebido! === getClientTime------')    
+                print('Recebido resposta de => ' + address[0])
+                reponseIds.append(str(address[0]))
+            else:
+                break
+    except socket.timeout:
+        print('------ Nenhum pacote recebido! === getClientTime------')    
 
     skt.close()
     if not reponseIds: #caso ninguem responda, o cliente tornará o master
         setMaster(computer_id)
     else:
+        #Seleciona o maior ip
+        reponseIds.append(computer_id)
+        ipList = []
         print(reponseIds)
+        temp = ''
+        for i in reponseIds:
+            ipList.append(str(i).replace('.', ''))
+        print(ipList)
+        positionMaiorIp = ipList.index(max(ipList, key=int))
+        maiorIp = reponseIds[positionMaiorIp]
+        print(maiorIp)
+        setMaster(maiorIp)
+
+        #Envia o master para os clientes
+        reponseIds.remove(computer_id)
+        sendMasterToClients(reponseIds, maiorIp)
 
 ###################### Define o master
 def setMaster(computer_id):
