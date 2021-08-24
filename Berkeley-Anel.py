@@ -60,7 +60,7 @@ def main():
                 elif info[0] == 'setClock':
                     setClock(info[1])
                 elif info[0] == 'election':
-                    skt.sendto('OK'.encode(), address)
+                    skt.sendto(b'OK', address)
                     print('======= Votação Iniciada por IP: %s' % info[1])
                 skt.close()
             except socket.timeout:
@@ -149,6 +149,8 @@ def askElection(): # Implementação do algoritmo Bully
             skt.settimeout(2)   #Aguarda a requisição por 15s
             data, address = skt.recvfrom(1460)
             data_str = str(data.decode())
+            print(data)
+            print(data_str)
            
             if data_str == 'OK':
                 print('Recebido resposta de => %s' % address)
