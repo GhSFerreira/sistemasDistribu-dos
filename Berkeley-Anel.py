@@ -1,4 +1,7 @@
-# ------- Autor - Gabriel Ferreira - 16.1.8213
+# Implementação do algoritmo de Berkeley juntamente com o Algoritmo de Eleição (Bully)
+#---------- Autor - Gabriel Ferreira - 16.1.8213 -----------
+
+
 import time
 import datetime
 import socket
@@ -27,16 +30,16 @@ def main():
     print(' ************** Computer ID: %s ***********' % computer_id)
     
     while True:
-        #Verifica se o computador é o servidor
-        if computers_master == computer_id: 
+        #Verifica se o endereço do computador é o mesmo do master
+        if computers_master == computer_id:
+            print('********* MASTER ********** \n') 
             clientTimers = getClientTimers(computers_toSend)
-            #clientTimers = getClientTime() # solicitará o relógio dos clientes
-            newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo
+            newTimer = calcTimer(clientTimers) # Calcula o novo timer do grupo com base na média de todos os relógios
             sendTimerToClients(newTimer)
             print(' \n -------- Tempo de Espera 10 Segundos ---------')
             time.sleep(10)
             
-        # Caso o servidor seja o cliente
+        # Se o IP do Master e o computador executante são siferente
         else:
             print('********* CLIENTE ********** \n')
             # Define o Socket e abre a porta especificada
@@ -46,36 +49,35 @@ def main():
             skt.bind(client_address)
 
             try:
+                #Inicia a escuta das chamadas vindas pelo master
                 print('Aguardando requisições ...')
-                skt.settimeout(15)   #Aguarda a requisição por 15s
+                skt.settimeout(15)   #Caso não receba uma solicitação em 15s, lança um timeout, sinalizando que o master caiu
                 data, address = skt.recvfrom(1460)
 
                 info = data.decode().split()
                 print(info)
 
-                if info[0] == 'setMaster':
+                if info[0] == 'setMaster': # Recebe uma msg de definição do Master
                     setMaster(info[1])
-                elif info[0] == 'getClock':
+                elif info[0] == 'getClock': # Recebe uma msg para informar o relógio do sistema
                     print('------ Relogio Enviado ------- ')
                     skt.sendto(getClock().encode(), address)
-                elif info[0] == 'setClock':
+                elif info[0] == 'setClock':  # Recebe uma msg para ajustar o relógio do sistema
                     setClock(info[1])
-                elif info[0] == 'election':
+                elif info[0] == 'election':  # Solicita uma nova eleição
                     time.sleep(2)
-                    skt.sendto(b'OK', address)
+                    skt.sendto(b'OK', address)  # Responde que concorda com a eleição
                     print('======= Votação Iniciada por IP: %s' % info[1])
                 skt.close()
             except socket.timeout:
-                #Caso o tempo da repsosta demore, significa que o servidor caiu
+                #Com o timeout significa que o servidor caiu
                 skt.close()
-                askElection() # Pede uma nova eleição caso o servidor não esteja ativo - Bully
+
+                askElection() # Pede uma nova eleição - Bully
 
 
-
-# -------------- Utils --------------------
-
-# -------------- Server -------------------
-#################### Calcula o novo relógio
+# =================== Server =====================
+# ----- Calcula o relógio a ser enviado com base na média dos relógios
 def calcTimer(clientTimers):
     print(' =========  Calcula o Timer Médio  =========')
     sumTimers = 0
@@ -95,6 +97,7 @@ def calcTimer(clientTimers):
 
         return time_str
 
+# ----- Envia o relogio calculado e passado por parametro, à todos os clientes
 def sendTimerToClients(newTimer):
     print('========== Enviando relógio para os clientes ============')
     skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Socket UDP
@@ -106,6 +109,7 @@ def sendTimerToClients(newTimer):
         skt.sendto(('setClock ' + getClock()).encode(), (ip,PORT))
     skt.close()
 
+# ------ Solicita o relógio de todos os computadores clientes
 def getClientTimers(clientsToSend):
     print('========== Pedindo relogio para os clientes ============')
 
@@ -130,6 +134,7 @@ def getClientTimers(clientsToSend):
     skt.close()
     return clientTimers
 
+# ------ Envia o endereço do Master para todos os clientes
 def sendMasterToClients(clientsToSend, master):
     print('========== Enviando Master ID para os clientes ============')
 
@@ -144,8 +149,10 @@ def sendMasterToClients(clientsToSend, master):
       
     skt.close()
 
-# --------- Client -------------
-################## Solicita a eleição
+
+
+# =================== Client =====================
+#--------- Solicita a eleição
 def askElection(): # Implementação do algoritmo Bully
     print(' ---------- Iniciando Eleição ----------')
     reponseIds = []
@@ -197,20 +204,22 @@ def askElection(): # Implementação do algoritmo Bully
         reponseIds.remove(computer_id)
         sendMasterToClients(reponseIds, maiorIp)
 
-###################### Define o master
+#--------- Define o endereço do Master no Cliente
 def setMaster(computer_id):
     global computers_master
     computers_master = computer_id
     print('------------- Master Atualizado: %s -------------' % computer_id)
 
-#################### Recebe a definição do relógio do master
+#--------- Atualiza o relógio
 def setClock(clock):
     print(' ------- Relógio Atualizado %s ----------' % clock)
 
-
-################# Envia o relógio do
+# --------- Retorna o relógio do sistema
 def getClock():
     return datetime.datetime.now().strftime('%H:%M:%S')
-# ---------- Inicial do programa ----------
+
+
+
+# =================== Início =====================
 if __name__ == "__main__":
     main()
